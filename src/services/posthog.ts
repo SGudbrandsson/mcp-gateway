@@ -11,6 +11,14 @@ import type { ServiceAdapter, ServiceAction } from '../types.js';
 
 const DEFAULT_BASE_URL = 'https://us.posthog.com';
 
+function validatePathSegment(value: unknown, name: string): string {
+  const s = String(value);
+  if (!s || /[/?#]/.test(s) || s.includes('..')) {
+    throw new Error(`Invalid ${name}: must not contain path separators`);
+  }
+  return encodeURIComponent(s);
+}
+
 async function posthogFetch(
   path: string,
   config: Record<string, unknown>,
@@ -21,6 +29,7 @@ async function posthogFetch(
 
   const baseUrl = (config.baseUrl as string) || DEFAULT_BASE_URL;
   const projectId = config.project_id as string;
+  if (!projectId) throw new Error('PostHog project_id not configured');
 
   const res = await fetch(`${baseUrl}/api/projects/${projectId}${path}`, {
     method: options.method ?? 'GET',
@@ -72,7 +81,7 @@ const actions: ServiceAction[] = [
     },
     execute: async (params, config) => {
       if (params.person_id) {
-        return posthogFetch(`/persons/${params.person_id}/`, config);
+        return posthogFetch(`/persons/${validatePathSegment(params.person_id, 'person_id')}/`, config);
       }
       if (params.distinct_id) {
         return posthogFetch(`/persons/?distinct_id=${encodeURIComponent(params.distinct_id as string)}`, config);
@@ -117,7 +126,7 @@ const actions: ServiceAction[] = [
       insight_id: { type: 'string', description: 'Insight ID', required: true },
     },
     execute: async (params, config) => {
-      return posthogFetch(`/insights/${params.insight_id}/`, config);
+      return posthogFetch(`/insights/${validatePathSegment(params.insight_id, 'insight_id')}/`, config);
     },
   },
   {
@@ -154,7 +163,7 @@ const actions: ServiceAction[] = [
       recording_id: { type: 'string', description: 'Session recording ID', required: true },
     },
     execute: async (params, config) => {
-      return posthogFetch(`/session_recordings/${params.recording_id}/`, config);
+      return posthogFetch(`/session_recordings/${validatePathSegment(params.recording_id, 'recording_id')}/`, config);
     },
   },
 ];

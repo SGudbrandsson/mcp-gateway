@@ -139,6 +139,76 @@ Project management — tasks, comments, and project tracking.
 }
 ```
 
+### Sentry
+
+Error tracking — list, inspect, and manage issues and events.
+
+| Action | Description |
+|--------|-------------|
+| `list_issues` | List issues for a project, with optional Sentry search query |
+| `get_issue` | Get details of a specific issue by ID |
+| `get_issue_events` | Get occurrences (events) for an issue |
+| `get_event_details` | Get full event details including stack trace |
+| `resolve_issue` | Mark an issue as resolved |
+| `unresolve_issue` | Reopen a resolved issue |
+| `update_issue` | Update an issue (assign, change status, set priority) |
+
+**Config:**
+```json
+{
+  "token": "your-sentry-auth-token",
+  "organization": "your-org-slug",
+  "project": "your-project-slug"
+}
+```
+
+### Linear
+
+Issue tracking — create, update, search, and manage issues and projects via GraphQL.
+
+| Action | Description |
+|--------|-------------|
+| `search_issues` | Search issues by text query |
+| `get_issue` | Get details of an issue by identifier (e.g., "ENG-123") |
+| `create_issue` | Create a new issue |
+| `update_issue` | Update an existing issue |
+| `delete_issue` | Archive an issue |
+| `list_teams` | List all teams (use to find team IDs) |
+| `list_projects` | List projects, optionally filtered by team |
+| `list_workflow_states` | List workflow states for a team |
+| `add_comment` | Add a comment to an issue |
+| `list_labels` | List available issue labels |
+
+**Config:**
+```json
+{
+  "token": "your-linear-api-key"
+}
+```
+
+### PostHog
+
+Product analytics — query events, persons, session recordings, and insights.
+
+| Action | Description |
+|--------|-------------|
+| `query_events` | Query recent events, filterable by type, person, and date range |
+| `get_person` | Get a person by ID or distinct_id |
+| `search_persons` | Search persons by email or properties |
+| `get_person_events` | Get all events for a person (activity timeline) |
+| `query_insights` | Get a saved insight (trend, funnel, etc.) by ID |
+| `list_cohorts` | List all cohorts |
+| `get_session_recordings` | Find session recordings, filterable by person and date |
+| `get_session_recording` | Get a specific session recording with events and details |
+
+**Config:**
+```json
+{
+  "token": "your-posthog-personal-api-key",
+  "project_id": "your-project-id"
+}
+```
+
 ## Adding a New Service
 
 1. Create `src/services/your-service.ts`:
@@ -216,7 +286,7 @@ npm run test:watch # watch mode
 Tests include:
 - Unit tests for the service registry (search, execute, validation)
 - Unit tests for config loading (env var interpolation, error handling)
-- Unit tests for the Asana adapter (mocked HTTP)
+- Unit tests for the Asana, Sentry, Linear, and PostHog adapters (mocked HTTP)
 - E2E test that starts the real MCP server process and communicates via stdio
 
 ## Design Decisions

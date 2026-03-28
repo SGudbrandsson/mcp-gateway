@@ -170,5 +170,13 @@ describe('PostHog adapter', () => {
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).toContain('/api/projects/12345/session_recordings/rec-1/');
     });
+
+    it('rejects recording_id containing ../', async () => {
+      await expect(action.execute({ recording_id: '../secret' }, config)).rejects.toThrow('Invalid recording_id: must not contain path separators');
+    });
+
+    it('throws when project_id is missing from config', async () => {
+      await expect(action.execute({ recording_id: 'rec-1' }, { token: 'test-token' })).rejects.toThrow('PostHog project_id not configured');
+    });
   });
 });

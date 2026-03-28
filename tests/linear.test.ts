@@ -78,6 +78,24 @@ describe('Linear adapter', () => {
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).toBe('https://linear.example.com/graphql');
     });
+
+    it('filters by team_id using GraphQL variables', async () => {
+      mockFetch.mockResolvedValueOnce(mockLinearResponse({ issueSearch: { nodes: [] } }));
+      await action.execute({ query: 'test', team_id: 'team-1' }, config);
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.variables.teamId).toBe('team-1');
+      expect(body.query).toContain('$teamId');
+      expect(body.query).not.toContain('"team-1"');
+    });
+
+    it('throws on GraphQL application-level errors in 200 response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ errors: [{ message: 'Not found' }] }),
+        text: async () => JSON.stringify({ errors: [{ message: 'Not found' }] }),
+      });
+      await expect(action.execute({ query: 'test' }, config)).rejects.toThrow('Linear GraphQL error:');
+    });
   });
 
   describe('get_issue', () => {
@@ -106,6 +124,10 @@ describe('Linear adapter', () => {
       expect(body.variables.input.title).toBe('New bug');
       expect(body.variables.input.teamId).toBe('team-1');
       expect(body.variables.input.priority).toBe(2);
+    });
+
+    it('throws when priority is not a valid number', async () => {
+      await expect(action.execute({ title: 'Bug', team_id: 'team-1', priority: 'abc' }, config)).rejects.toThrow('priority must be 0-4');
     });
   });
 
@@ -160,6 +182,14 @@ describe('Linear adapter', () => {
       const result = await action.execute({}, config);
       expect(result).toEqual({ projects: { nodes: [{ id: '1', name: 'Project A' }] } });
     });
+
+    it('filters by team_id using $teamId variable', async () => {
+      mockFetch.mockResolvedValueOnce(mockLinearResponse({ projects: { nodes: [] } }));
+      await action.execute({ team_id: 'team-1' }, config);
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.variables.teamId).toBe('team-1');
+      expect(body.query).toContain('$teamId');
+    });
   });
 
   describe('list_workflow_states', () => {
@@ -197,6 +227,14 @@ describe('Linear adapter', () => {
       }));
       const result = await action.execute({}, config);
       expect(result).toEqual({ issueLabels: { nodes: [{ id: '1', name: 'Bug', color: '#red' }] } });
+    });
+
+    it('filters by team_id using $teamId variable', async () => {
+      mockFetch.mockResolvedValueOnce(mockLinearResponse({ issueLabels: { nodes: [] } }));
+      await action.execute({ team_id: 'team-1' }, config);
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.variables.teamId).toBe('team-1');
+      expect(body.query).toContain('$teamId');
     });
   });
 });

@@ -73,6 +73,14 @@ describe('Sentry adapter', () => {
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url.startsWith('https://sentry.example.com/api/0')).toBe(true);
     });
+
+    it('throws when organization is missing from config', async () => {
+      await expect(action.execute({}, { token: 'test-token', project: 'my-project' })).rejects.toThrow('Sentry organization and project must be configured');
+    });
+
+    it('throws when project is missing from config', async () => {
+      await expect(action.execute({}, { token: 'test-token', organization: 'my-org' })).rejects.toThrow('Sentry organization and project must be configured');
+    });
   });
 
   describe('get_issue', () => {
@@ -100,6 +108,22 @@ describe('Sentry adapter', () => {
     it('throws on API error', async () => {
       mockFetch.mockResolvedValueOnce(mockSentryError(404, 'Not Found'));
       await expect(action.execute({ issue_id: '123' }, config)).rejects.toThrow('Sentry API 404');
+    });
+
+    it('rejects issue_id containing /', async () => {
+      await expect(action.execute({ issue_id: '123/456' }, config)).rejects.toThrow('Invalid issue_id: must not contain path separators');
+    });
+
+    it('rejects issue_id containing ?', async () => {
+      await expect(action.execute({ issue_id: '123?foo' }, config)).rejects.toThrow('Invalid issue_id: must not contain path separators');
+    });
+
+    it('rejects issue_id containing #', async () => {
+      await expect(action.execute({ issue_id: '123#section' }, config)).rejects.toThrow('Invalid issue_id: must not contain path separators');
+    });
+
+    it('rejects issue_id containing ..', async () => {
+      await expect(action.execute({ issue_id: '../secret' }, config)).rejects.toThrow('Invalid issue_id: must not contain path separators');
     });
   });
 

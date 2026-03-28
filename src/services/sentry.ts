@@ -12,6 +12,14 @@ import type { ServiceAdapter, ServiceAction } from '../types.js';
 
 const DEFAULT_BASE_URL = 'https://sentry.io/api/0';
 
+function validatePathSegment(value: unknown, name: string): string {
+  const s = String(value);
+  if (!s || /[/?#]/.test(s) || s.includes('..')) {
+    throw new Error(`Invalid ${name}: must not contain path separators`);
+  }
+  return encodeURIComponent(s);
+}
+
 async function sentryFetch(
   path: string,
   config: Record<string, unknown>,
@@ -51,11 +59,12 @@ const actions: ServiceAction[] = [
     execute: async (params, config) => {
       const org = config.organization as string;
       const project = config.project as string;
+      if (!org || !project) throw new Error('Sentry organization and project must be configured');
       const searchParams = new URLSearchParams();
       if (params.query) searchParams.set('query', params.query as string);
       if (params.sort) searchParams.set('sort', params.sort as string);
       const qs = searchParams.toString();
-      return sentryFetch(`/projects/${org}/${project}/issues/${qs ? `?${qs}` : ''}`, config);
+      return sentryFetch(`/projects/${validatePathSegment(org, 'organization')}/${validatePathSegment(project, 'project')}/issues/${qs ? `?${qs}` : ''}`, config);
     },
   },
   {
@@ -65,7 +74,7 @@ const actions: ServiceAction[] = [
       issue_id: { type: 'string', description: 'Issue ID', required: true },
     },
     execute: async (params, config) => {
-      return sentryFetch(`/issues/${params.issue_id}/`, config);
+      return sentryFetch(`/issues/${validatePathSegment(params.issue_id, 'issue_id')}/`, config);
     },
   },
   {
@@ -75,7 +84,7 @@ const actions: ServiceAction[] = [
       issue_id: { type: 'string', description: 'Issue ID', required: true },
     },
     execute: async (params, config) => {
-      return sentryFetch(`/issues/${params.issue_id}/events/`, config);
+      return sentryFetch(`/issues/${validatePathSegment(params.issue_id, 'issue_id')}/events/`, config);
     },
   },
   {
@@ -86,7 +95,7 @@ const actions: ServiceAction[] = [
       event_id: { type: 'string', description: 'Event ID', required: true },
     },
     execute: async (params, config) => {
-      return sentryFetch(`/issues/${params.issue_id}/events/${params.event_id}/`, config);
+      return sentryFetch(`/issues/${validatePathSegment(params.issue_id, 'issue_id')}/events/${validatePathSegment(params.event_id, 'event_id')}/`, config);
     },
   },
   {
@@ -96,7 +105,7 @@ const actions: ServiceAction[] = [
       issue_id: { type: 'string', description: 'Issue ID', required: true },
     },
     execute: async (params, config) => {
-      return sentryFetch(`/issues/${params.issue_id}/`, config, {
+      return sentryFetch(`/issues/${validatePathSegment(params.issue_id, 'issue_id')}/`, config, {
         method: 'PUT',
         body: { status: 'resolved' },
       });
@@ -109,7 +118,7 @@ const actions: ServiceAction[] = [
       issue_id: { type: 'string', description: 'Issue ID', required: true },
     },
     execute: async (params, config) => {
-      return sentryFetch(`/issues/${params.issue_id}/`, config, {
+      return sentryFetch(`/issues/${validatePathSegment(params.issue_id, 'issue_id')}/`, config, {
         method: 'PUT',
         body: { status: 'unresolved' },
       });
@@ -126,7 +135,7 @@ const actions: ServiceAction[] = [
     },
     execute: async (params, config) => {
       const { issue_id, ...data } = params;
-      return sentryFetch(`/issues/${issue_id}/`, config, {
+      return sentryFetch(`/issues/${validatePathSegment(issue_id, 'issue_id')}/`, config, {
         method: 'PUT',
         body: data,
       });

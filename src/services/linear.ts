@@ -107,7 +107,11 @@ const actions: ServiceAction[] = [
         teamId: params.team_id,
       };
       if (params.description) input.description = params.description;
-      if (params.priority) input.priority = parseInt(params.priority as string, 10);
+      if (params.priority) {
+        const p = parseInt(params.priority as string, 10);
+        if (isNaN(p) || p < 0 || p > 4) throw new Error('priority must be 0-4');
+        input.priority = p;
+      }
       if (params.assignee_id) input.assigneeId = params.assignee_id;
       if (params.state_id) input.stateId = params.state_id;
       if (params.label_ids) input.labelIds = (params.label_ids as string).split(',').map((s) => s.trim());
@@ -139,7 +143,11 @@ const actions: ServiceAction[] = [
       const input: Record<string, unknown> = {};
       if (params.title) input.title = params.title;
       if (params.description) input.description = params.description;
-      if (params.priority) input.priority = parseInt(params.priority as string, 10);
+      if (params.priority) {
+        const p = parseInt(params.priority as string, 10);
+        if (isNaN(p) || p < 0 || p > 4) throw new Error('priority must be 0-4');
+        input.priority = p;
+      }
       if (params.assignee_id) input.assigneeId = params.assignee_id;
       if (params.state_id) input.stateId = params.state_id;
 
