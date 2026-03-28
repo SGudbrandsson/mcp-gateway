@@ -219,6 +219,10 @@ describe('Supabase adapter', () => {
       const url = mockFetch.mock.calls[0][0] as string;
       expect(url).toContain('/storage/v1/object/sign/photos/uploads/photo.jpg');
     });
+
+    it('rejects path with traversal sequences', async () => {
+      await expect(action.execute({ bucket_id: 'photos', path: '../../etc/passwd', expires_in: '3600' }, config)).rejects.toThrow('Invalid path');
+    });
   });
 
   describe('upload_file', () => {
@@ -232,6 +236,11 @@ describe('Supabase adapter', () => {
       expect(url).toContain('/storage/v1/object/photos/test.txt');
       expect(opts.method).toBe('POST');
       expect(opts.headers['Content-Type']).toBe('text/plain');
+    });
+
+    it('rejects path with traversal sequences', async () => {
+      const content = Buffer.from('x').toString('base64');
+      await expect(action.execute({ bucket_id: 'photos', path: '../etc/passwd', content }, config)).rejects.toThrow('Invalid path');
     });
   });
 

@@ -21,6 +21,14 @@ function validatePathSegment(value: unknown, name: string): string {
   return encodeURIComponent(s);
 }
 
+function validateStoragePath(value: unknown, name: string): string {
+  const s = String(value);
+  if (!s || /[?#]/.test(s) || s.includes('..')) {
+    throw new Error(`Invalid ${name}: must not contain traversal sequences`);
+  }
+  return s.split('/').map((seg) => encodeURIComponent(seg)).join('/');
+}
+
 function requireProjectRef(config: Record<string, unknown>): string {
   const ref = config.project_ref as string | undefined;
   if (!ref) throw new Error('Supabase project_ref not configured');
@@ -306,7 +314,7 @@ const actions: ServiceAction[] = [
     },
     execute: async (params, config) => {
       return supabaseProjectFetch(
-        `/storage/v1/object/sign/${validatePathSegment(params.bucket_id, 'bucket_id')}/${params.path}`,
+        `/storage/v1/object/sign/${validatePathSegment(params.bucket_id, 'bucket_id')}/${validateStoragePath(params.path, 'path')}`,
         config,
         { method: 'POST', body: { expiresIn: parseInt(params.expires_in as string, 10) } }
       );
@@ -325,7 +333,7 @@ const actions: ServiceAction[] = [
       const rawBody = Buffer.from(params.content as string, 'base64');
       const contentType = (params.content_type as string) || 'application/octet-stream';
       return supabaseProjectFetch(
-        `/storage/v1/object/${validatePathSegment(params.bucket_id, 'bucket_id')}/${params.path}`,
+        `/storage/v1/object/${validatePathSegment(params.bucket_id, 'bucket_id')}/${validateStoragePath(params.path, 'path')}`,
         config,
         { method: 'POST', rawBody, contentType }
       );
