@@ -48,10 +48,11 @@ describe('Vercel adapter', () => {
     expect(names).toContain('create_env_var');
     expect(names).toContain('update_env_var');
     expect(names).toContain('delete_env_var');
+    expect(names).toContain('get_deployment_events');
     expect(names).toContain('list_domains');
     expect(names).toContain('add_domain');
     expect(names).toContain('remove_domain');
-    expect(names.length).toBe(18);
+    expect(names.length).toBe(19);
   });
 
   describe('list_deployments', () => {
@@ -201,6 +202,36 @@ describe('Vercel adapter', () => {
 
     it('rejects domain with path traversal', async () => {
       await expect(action.execute({ project_id: 'proj-1', domain: '../bad' }, config)).rejects.toThrow('Invalid domain');
+    });
+  });
+
+  describe('get_deployment_events', () => {
+    const action = vercelAdapter.actions.find((a) => a.name === 'get_deployment_events')!;
+
+    it('fetches build logs for a deployment', async () => {
+      const events = [{ type: 'stdout', created: 1690000000000, payload: { text: 'Building...' } }];
+      mockFetch.mockResolvedValueOnce(mockVercelResponse(events));
+      const result = await action.execute({ deployment_id: 'd1' }, config);
+      expect(result).toEqual(events);
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain('/v2/deployments/d1/events');
+    });
+
+    it('passes direction, limit, since, until params', async () => {
+      mockFetch.mockResolvedValueOnce(mockVercelResponse([]));
+      await action.execute(
+        { deployment_id: 'd1', direction: 'backward', limit: '100', since: '1690000000000', until: '1690001000000' },
+        config
+      );
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain('direction=backward');
+      expect(url).toContain('limit=100');
+      expect(url).toContain('since=1690000000000');
+      expect(url).toContain('until=1690001000000');
+    });
+
+    it('rejects deployment_id with path traversal', async () => {
+      await expect(action.execute({ deployment_id: '../bad' }, config)).rejects.toThrow('Invalid deployment_id');
     });
   });
 

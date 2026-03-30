@@ -272,6 +272,30 @@ const actions: ServiceAction[] = [
     },
   },
 
+  // --- Logs ---
+  {
+    name: 'get_deployment_events',
+    description: 'Get build logs (stdout/stderr) for a Vercel deployment',
+    params: {
+      deployment_id: { type: 'string', description: 'Deployment ID', required: true },
+      direction: { type: 'string', description: 'Log order: "forward" (oldest first) or "backward" (newest first)', required: false, enum: ['forward', 'backward'] },
+      limit: { type: 'string', description: 'Max number of log lines to return', required: false },
+      since: { type: 'string', description: 'Return events after this timestamp (ms since epoch)', required: false },
+      until: { type: 'string', description: 'Return events before this timestamp (ms since epoch)', required: false },
+    },
+    execute: async (params, config) => {
+      const extraParams = new URLSearchParams();
+      if (params.direction) extraParams.set('direction', params.direction as string);
+      if (params.limit) extraParams.set('limit', params.limit as string);
+      if (params.since) extraParams.set('since', params.since as string);
+      if (params.until) extraParams.set('until', params.until as string);
+      return vercelFetch(
+        `/v2/deployments/${validatePathSegment(params.deployment_id, 'deployment_id')}/events`,
+        config,
+        { extraParams }
+      );
+    },
+  },
   // --- Domains ---
   {
     name: 'list_domains',
@@ -317,6 +341,6 @@ const actions: ServiceAction[] = [
 
 export const vercelAdapter: ServiceAdapter = {
   name: 'vercel',
-  description: 'Vercel — manage deployments, projects, environment variables, and domains',
+  description: 'Vercel — manage deployments, logs, projects, environment variables, and domains',
   actions,
 };

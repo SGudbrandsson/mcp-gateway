@@ -219,7 +219,7 @@ If the tools aren't appearing, check:
 | PostHog | `token`, `project_id` | Events, persons, session recordings, insights |
 | Cloudflare | `token`, `account_id`, `zone_id` | DNS, Zero Trust Access, Tunnels |
 | Coolify | `token`, `baseUrl` | Applications, servers, databases, projects |
-| Vercel | `token`, `team_id` | Deployments, projects, env vars, domains |
+| Vercel | `token`, `team_id` | Deployments, build logs, projects, env vars, domains |
 | Supabase | `token`, `service_role_key`, `project_ref` | Database SQL, auth, storage, edge functions |
 
 See `examples/keeps.json` for a full config example with all services.
