@@ -77,7 +77,9 @@ export async function startMcpProxy(
     command: config.command,
     args: config.args,
     env: {
-      ...process.env as Record<string, string>,
+      ...Object.fromEntries(
+        Object.entries(process.env).filter((e): e is [string, string] => e[1] !== undefined)
+      ),
       ...(config.env ?? {}),
     },
   });
@@ -95,11 +97,15 @@ export async function startMcpProxy(
       name: tool.name,
       description: tool.description ?? '',
       params,
-      execute: async (actionParams: Record<string, unknown>) => {
-        const result = await client.callTool({
+      execute: async (actionParams: Record<string, unknown>, _config: Record<string, unknown>) => {
+        const callPromise = client.callTool({
           name: tool.name,
           arguments: actionParams,
         });
+        const timeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Proxied tool "${tool.name}" timed out after 30s`)), 30_000)
+        );
+        const result = await Promise.race([callPromise, timeout]);
         // Extract text content from MCP response
         const texts = (result.content as Array<{ type: string; text?: string }>)
           .filter((c) => c.type === 'text' && c.text)
