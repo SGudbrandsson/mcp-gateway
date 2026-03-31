@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview Interactive setup wizard for Codemode Gateway.
+ * @fileoverview Interactive setup wizard for MCP Relay Kit.
  *
  * Run with: node dist/server.js --setup
  */
@@ -72,7 +72,7 @@ export function generateBackupPath(filePath: string): string {
 /** Merge our gateway entry into an existing MCP config, preserving other servers. */
 export function mergeIntoMcpConfig(existing: McpConfig | null, entry: McpServerEntry): McpConfig {
   const base = existing ?? { mcpServers: {} };
-  return { ...base, mcpServers: { ...base.mcpServers, 'codemode-gateway': entry } };
+  return { ...base, mcpServers: { ...base.mcpServers, 'mcp-relay-kit': entry } };
 }
 
 // ── Service metadata registry ──
@@ -303,7 +303,7 @@ async function writeConfigFile(
 ): Promise<string> {
   printHeader('Write Gateway Config');
 
-  const defaultPath = path.join(os.homedir(), '.config', 'codemode-gateway', 'config.json');
+  const defaultPath = path.join(os.homedir(), '.config', 'mcp-relay-kit', 'config.json');
   const rawPath = await ask(`Config file path [${defaultPath}]: `);
   const configPath = (rawPath || defaultPath).replace(/^~(?=\/|$)/, os.homedir());
 
@@ -427,7 +427,7 @@ async function configureAiTool(
 
   if (tool.snippetOnly) {
     console.log(`\nAdd this to your ${tool.name} MCP config:\n`);
-    const snippet: McpConfig = { mcpServers: { 'codemode-gateway': entry } };
+    const snippet: McpConfig = { mcpServers: { 'mcp-relay-kit': entry } };
     console.log(JSON.stringify(snippet, null, 2));
     return;
   }
@@ -482,7 +482,7 @@ async function configureAiTool(
 // ── Main entry point ──
 
 export async function runSetup(): Promise<void> {
-  console.log('\n=== Codemode Gateway Setup ===\n');
+  console.log('\n=== MCP Relay Kit Setup ===\n');
   console.log('This wizard will help you configure the gateway and connect it to your AI tools.\n');
 
   const { ask, close } = createPrompt();
@@ -505,7 +505,7 @@ export async function runSetup(): Promise<void> {
     }
 
     printHeader('Setup Complete');
-    console.log('You can re-run this wizard anytime with: npx codemode-gateway --setup\n');
+    console.log('You can re-run this wizard anytime with: npx mcp-relay-kit --setup\n');
   } finally {
     close();
   }

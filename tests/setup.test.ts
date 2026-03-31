@@ -47,7 +47,7 @@ describe('mergeIntoMcpConfig', () => {
     });
     expect(result).toEqual({
       mcpServers: {
-        'codemode-gateway': {
+        'mcp-relay-kit': {
           command: 'node', args: ['/path/to/server.js'],
           env: { GATEWAY_CONFIG: '/path/to/config.json' },
         },
@@ -61,16 +61,16 @@ describe('mergeIntoMcpConfig', () => {
       env: { GATEWAY_CONFIG: '/path/to/config.json' },
     });
     expect(result.mcpServers['other-server']).toEqual({ command: 'other', args: [] });
-    expect(result.mcpServers['codemode-gateway']).toBeDefined();
+    expect(result.mcpServers['mcp-relay-kit']).toBeDefined();
   });
   it('overwrites existing gateway entry', () => {
-    const existing = { mcpServers: { 'codemode-gateway': { command: 'old', args: ['/old'] } } };
+    const existing = { mcpServers: { 'mcp-relay-kit': { command: 'old', args: ['/old'] } } };
     const result = mergeIntoMcpConfig(existing, {
       command: 'node', args: ['/new/server.js'],
       env: { GATEWAY_CONFIG: '/new/config.json' },
     });
-    expect(result.mcpServers['codemode-gateway'].command).toBe('node');
-    expect(result.mcpServers['codemode-gateway'].args).toEqual(['/new/server.js']);
+    expect(result.mcpServers['mcp-relay-kit'].command).toBe('node');
+    expect(result.mcpServers['mcp-relay-kit'].args).toEqual(['/new/server.js']);
   });
 });
 

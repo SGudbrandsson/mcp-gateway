@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview Codemode Gateway server.
+ * @fileoverview MCP Relay Kit server.
  *
  * Exposes all registered services through 2 tools:
  *   - search(query) — discover available actions
@@ -37,18 +37,18 @@ if (process.argv.includes('--setup')) {
     const adapter = availableAdapters[adapterName];
     if (adapter) {
       registry.register(adapter, serviceConfig, configKey);
-      console.error(`[codemode-gateway] Registered service: ${configKey}`);
+      console.error(`[mcp-relay-kit] Registered service: ${configKey}`);
     } else {
-      console.error(`[codemode-gateway] Unknown service in config: ${configKey} (available: ${Object.keys(availableAdapters).join(', ')})`);
+      console.error(`[mcp-relay-kit] Unknown service in config: ${configKey} (available: ${Object.keys(availableAdapters).join(', ')})`);
     }
   }
 
   if (registry.serviceNames.length === 0) {
-    console.error('[codemode-gateway] Warning: No services registered. Set GATEWAY_CONFIG to a config file path.');
+    console.error('[mcp-relay-kit] Warning: No services registered. Set GATEWAY_CONFIG to a config file path.');
   }
 
   const server = new McpServer({
-    name: 'codemode-gateway',
+    name: 'mcp-relay-kit',
     version: '0.1.0',
   });
 
@@ -101,11 +101,11 @@ if (process.argv.includes('--setup')) {
   async function main() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error(`[codemode-gateway] Server running (services: ${registry.serviceNames.join(', ') || 'none'})`);
+    console.error(`[mcp-relay-kit] Server running (services: ${registry.serviceNames.join(', ') || 'none'})`);
   }
 
   main().catch((err) => {
-    console.error('[codemode-gateway] Fatal error:', err);
+    console.error('[mcp-relay-kit] Fatal error:', err);
     process.exit(1);
   });
 }

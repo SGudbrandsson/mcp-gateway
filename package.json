@@ -1,11 +1,11 @@
 {
-  "name": "codemode-gateway",
+  "name": "mcp-relay-kit",
   "version": "0.1.0",
-  "description": "Lightweight MCP gateway — exposes multiple services (Asana, Slack, Sentry, PostHog, etc.) as 2 tools: search + execute",
+  "description": "Lightweight MCP relay — exposes multiple services (Asana, Slack, Sentry, PostHog, etc.) as 2 tools: search + execute",
   "type": "module",
   "main": "dist/server.js",
   "bin": {
-    "codemode-gateway": "dist/server.js"
+    "mcp-relay-kit": "dist/server.js"
   },
   "scripts": {
     "build": "tsc",

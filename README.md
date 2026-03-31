@@ -1,4 +1,4 @@
-# codemode-gateway
+# mcp-relay-kit
 
 Lightweight MCP server that exposes multiple services through just 2 tools: **search** and **execute**.
 
@@ -23,7 +23,7 @@ The gateway acts as a thin dispatcher — no sandbox, no V8 isolates, no heavy i
 Run the setup wizard to configure services and connect your AI tool:
 
 ```bash
-npx codemode-gateway --setup
+npx mcp-relay-kit --setup
 ```
 
 The wizard will:
@@ -38,7 +38,7 @@ For manual configuration, see below.
 ### 1. Install dependencies
 
 ```bash
-cd ~/sources/codemode-gateway
+cd ~/sources/mcp-relay-kit
 npm install
 ```
 
@@ -55,7 +55,7 @@ npm install
 }
 ```
 
-Save as e.g. `~/.config/codemode-gateway/keeps.json`.
+Save as e.g. `~/.config/mcp-relay-kit/keeps.json`.
 
 Environment variables in `${VAR}` syntax are interpolated at load time.
 
@@ -66,9 +66,9 @@ Environment variables in `${VAR}` syntax are interpolated at load time.
   "mcpServers": {
     "gateway": {
       "command": "npx",
-      "args": ["tsx", "/home/siggi/sources/codemode-gateway/src/server.ts"],
+      "args": ["tsx", "/home/siggi/sources/mcp-relay-kit/src/server.ts"],
       "env": {
-        "GATEWAY_CONFIG": "/home/siggi/.config/codemode-gateway/keeps.json"
+        "GATEWAY_CONFIG": "/home/siggi/.config/mcp-relay-kit/keeps.json"
       }
     }
   }
@@ -82,9 +82,9 @@ Or after building:
   "mcpServers": {
     "gateway": {
       "command": "node",
-      "args": ["/home/siggi/sources/codemode-gateway/dist/server.js"],
+      "args": ["/home/siggi/sources/mcp-relay-kit/dist/server.js"],
       "env": {
-        "GATEWAY_CONFIG": "/home/siggi/.config/codemode-gateway/keeps.json"
+        "GATEWAY_CONFIG": "/home/siggi/.config/mcp-relay-kit/keeps.json"
       }
     }
   }
@@ -315,7 +315,7 @@ You can register the same service multiple times with different configurations u
 Different projects can use different configs pointing to different services:
 
 ```
-~/.config/codemode-gateway/
+~/.config/mcp-relay-kit/
 ├── keeps.json      → asana + slack + sentry
 ├── codeman.json    → asana + github
 └── personal.json   → asana

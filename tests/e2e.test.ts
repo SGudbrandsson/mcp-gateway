@@ -5,10 +5,10 @@ import { writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-describe('Codemode Gateway E2E', () => {
+describe('MCP Relay Kit E2E', () => {
   let client: Client;
   let transport: StdioClientTransport;
-  const configPath = join(tmpdir(), 'codemode-gateway-e2e-config.json');
+  const configPath = join(tmpdir(), 'mcp-relay-kit-e2e-config.json');
 
   beforeAll(async () => {
     // Write a config that enables asana (we won't make real API calls,
