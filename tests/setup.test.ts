@@ -2,7 +2,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { resolveValue, generateBackupPath, mergeIntoMcpConfig, writeFileWithBackup } from '../src/setup.js';
+import { resolveValue, generateBackupPath, mergeIntoMcpConfig, writeFileWithBackup, buildGatewayConfig } from '../src/setup.js';
 
 describe('resolveValue', () => {
   it('wraps ALL_CAPS input as env var reference', () => {
@@ -105,5 +105,29 @@ describe('writeFileWithBackup', () => {
     expect(backupPath).toMatch(/config\.json\.bak\.\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}$/);
     expect(fs.readFileSync(backupPath!, 'utf-8')).toBe(originalContent);
     expect(fs.readFileSync(filePath, 'utf-8')).toBe(newContent);
+  });
+});
+
+describe('buildGatewayConfig', () => {
+  it('includes mcpServers when mcp instances are present', () => {
+    const result = buildGatewayConfig(
+      [{ configKey: 'asana', config: { token: 'tok' } }],
+      [{ name: 'github', command: 'npx', args: ['-y', '@mcp/github'], env: { TOKEN: 'ghp' } }]
+    );
+    expect(result.services.asana).toEqual({ token: 'tok' });
+    expect(result.mcpServers).toBeDefined();
+    expect(result.mcpServers!.github).toEqual({
+      command: 'npx',
+      args: ['-y', '@mcp/github'],
+      env: { TOKEN: 'ghp' },
+    });
+  });
+
+  it('omits mcpServers key when no mcp instances', () => {
+    const result = buildGatewayConfig(
+      [{ configKey: 'asana', config: { token: 'tok' } }],
+      []
+    );
+    expect(result.mcpServers).toBeUndefined();
   });
 });

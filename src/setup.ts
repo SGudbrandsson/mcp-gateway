@@ -43,6 +43,13 @@ interface ServiceInstance {
   config: Record<string, string>;
 }
 
+interface McpInstance {
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+}
+
 interface AiTool {
   name: string;
   detected: boolean;
@@ -271,14 +278,73 @@ async function configureAllServices(
   return instances;
 }
 
+async function configureMcpServers(
+  ask: (q: string) => Promise<string>
+): Promise<McpInstance[]> {
+  printHeader('Add MCP Servers');
+  console.log('You can proxy any MCP server through the relay.\n');
+
+  const instances: McpInstance[] = [];
+
+  while (true) {
+    const addMore = instances.length === 0
+      ? await ask('Would you like to add an MCP server? (y/N): ')
+      : await ask('Add another MCP server? (y/N): ');
+    if (addMore.toLowerCase() !== 'y') break;
+
+    const name = await ask('  Server name (e.g., "github"): ');
+    if (!name.trim()) {
+      console.log('  Name is required, skipping.');
+      continue;
+    }
+
+    const command = await ask('  Command (e.g., "npx"): ');
+    if (!command.trim()) {
+      console.log('  Command is required, skipping.');
+      continue;
+    }
+
+    const argsRaw = await ask('  Args (space-separated, e.g., "-y @modelcontextprotocol/server-github"): ');
+    const args = argsRaw.trim() ? argsRaw.trim().split(/\s+/) : [];
+
+    const env: Record<string, string> = {};
+    console.log('  Environment variables (empty name to finish):');
+    while (true) {
+      const envName = await ask('    Var name: ');
+      if (!envName.trim()) break;
+      const envValue = await ask(`    Value for ${envName}: `);
+      env[envName.trim()] = resolveValue(envValue.trim());
+    }
+
+    instances.push({ name: name.trim(), command: command.trim(), args, env });
+    console.log(`  Added MCP server: ${name.trim()}\n`);
+  }
+
+  return instances;
+}
+
 // ── Config file writing ──
 
-function buildGatewayConfig(instances: ServiceInstance[]): Record<string, unknown> {
+export function buildGatewayConfig(
+  instances: ServiceInstance[],
+  mcpInstances: McpInstance[] = []
+): { services: Record<string, Record<string, string>>; mcpServers?: Record<string, { command: string; args: string[]; env: Record<string, string> }> } {
   const services: Record<string, Record<string, string>> = {};
   for (const inst of instances) {
     services[inst.configKey] = inst.config;
   }
-  return { services };
+  const config: { services: typeof services; mcpServers?: Record<string, { command: string; args: string[]; env: Record<string, string> }> } = { services };
+  if (mcpInstances.length > 0) {
+    config.mcpServers = {};
+    for (const mcp of mcpInstances) {
+      config.mcpServers[mcp.name] = {
+        command: mcp.command,
+        args: mcp.args,
+        env: mcp.env,
+      };
+    }
+  }
+  return config;
 }
 
 export function writeFileWithBackup(filePath: string, content: string): string | null {
@@ -299,6 +365,7 @@ export function writeFileWithBackup(filePath: string, content: string): string |
 
 async function writeConfigFile(
   instances: ServiceInstance[],
+  mcpInstances: McpInstance[],
   ask: (q: string) => Promise<string>,
 ): Promise<string> {
   printHeader('Write Gateway Config');
@@ -307,7 +374,7 @@ async function writeConfigFile(
   const rawPath = await ask(`Config file path [${defaultPath}]: `);
   const configPath = (rawPath || defaultPath).replace(/^~(?=\/|$)/, os.homedir());
 
-  const gatewayConfig = buildGatewayConfig(instances);
+  const gatewayConfig = buildGatewayConfig(instances, mcpInstances);
   const content = JSON.stringify(gatewayConfig, null, 2) + '\n';
 
   console.log('\nPreview:');
@@ -483,22 +550,20 @@ async function configureAiTool(
 
 export async function runSetup(): Promise<void> {
   console.log('\n=== MCP Relay Kit Setup ===\n');
-  console.log('This wizard will help you configure the gateway and connect it to your AI tools.\n');
+  console.log('This wizard will help you configure services and MCP servers.\n');
 
   const { ask, close } = createPrompt();
 
   try {
-    // Select services
     const selectedNames = await selectServices(ask);
     console.log(`\nSelected: ${selectedNames.join(', ')}`);
-
-    // Configure each service
     const instances = await configureAllServices(selectedNames, ask);
 
-    // Write gateway config
-    const configPath = await writeConfigFile(instances, ask);
+    // Configure proxied MCP servers
+    const mcpInstances = await configureMcpServers(ask);
 
-    // Optionally configure AI tool
+    const configPath = await writeConfigFile(instances, mcpInstances, ask);
+
     const setupAi = await ask('\nConfigure an AI tool now? (Y/n): ');
     if (setupAi.toLowerCase() !== 'n') {
       await configureAiTool(configPath, ask);
