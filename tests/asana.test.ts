@@ -142,7 +142,7 @@ describe('Asana adapter', () => {
       const result = await action.execute({ query: 'bug fix' }, config);
       expect(result).toEqual([{ gid: '1', name: 'Found' }]);
       const url = mockFetch.mock.calls[0][0] as string;
-      expect(url).toContain('/workspaces/ws-123/typeahead');
+      expect(url).toContain('/workspaces/ws-123/tasks/search');
       expect(url).toContain('text=bug+fix');
     });
 

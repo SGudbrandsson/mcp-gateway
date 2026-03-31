@@ -132,13 +132,12 @@ const actions: ServiceAction[] = [
       if (!workspace) throw new Error('Asana workspace not configured — required for search');
       const searchParams = new URLSearchParams({
         'text': params.query as string,
-        'type': 'task',
         'opt_fields': 'name,completed,due_on,assignee.name,permalink_url',
       });
       if (params.project_id) {
         searchParams.set('projects.any', params.project_id as string);
       }
-      return asanaFetch(`/workspaces/${workspace}/typeahead?${searchParams}`, config);
+      return asanaFetch(`/workspaces/${workspace}/tasks/search?${searchParams}`, config);
     },
   },
   {
