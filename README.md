@@ -1,12 +1,14 @@
 # mcp-relay-kit
 
-**Connect all your dev tools to AI — without blowing up your context window.**
+One MCP server for all your tools. Two tools. ~2,000 tokens.
 
-Every MCP server you add dumps its full tool list into your AI's context. The official Asana MCP alone uses 25,000+ tokens. Add Sentry, GitHub, Slack, and PostHog, and you've burned 100k+ tokens before the conversation even starts.
+---
 
-MCP Relay Kit fixes this. It sits between your AI tool and your services, exposing everything through just **2 tools** — `search` and `execute` — at a fixed cost of ~2,000 tokens. Add 5 services or 50; the context cost stays the same.
+Every MCP server you add dumps its full tool list into your AI's context. The official Asana MCP alone uses 25,000+ tokens. Add Sentry, GitHub, Linear, and PostHog and you've burned 100k+ tokens before the conversation starts.
 
-### How it works
+MCP Relay Kit sits between your AI tool and your services, exposing everything through just **2 tools** — `search` and `execute` — at a fixed cost of ~2,000 tokens. Add 5 services or 50; the context cost stays the same.
+
+## How it works
 
 ```
 Your AI tool
@@ -18,25 +20,39 @@ Your AI tool
         → calls Asana API, returns result
 ```
 
-Your AI calls `search` to discover what's available, then `execute` to use it. That's it. Built-in service adapters and proxied MCP servers all work the same way.
+Your AI calls `search` to discover what's available, then `execute` to use it.
+
+## Why this approach
+
+**Context cost.** Each MCP server injects its full tool list into the context window. One server with 20 tools might cost 15,000 tokens. Five servers and you've lost 75,000+ tokens to tool definitions alone — before your code, your conversation, or your files. The relay collapses all of that into 2 tool definitions at ~2,000 tokens, regardless of how many services sit behind it.
+
+**Fewer mistakes.** With 5+ MCP servers loaded, your AI has 100+ tools to pick from. It often picks the wrong one or hallucinates parameters. With the relay, the AI searches first (`search("create issue")`), gets back the exact schema, then calls it. Less guesswork, fewer retries.
+
+**One config, one process.** Instead of managing 5 separate MCP server configs, you manage one relay config. One process to start, one place to add credentials, one thing to debug when something breaks.
 
 ## Get started
 
-The fastest way to set up is the interactive wizard:
+### Install from npm
 
-```bash
+```
+npm install -g mcp-relay-kit
+```
+
+### Interactive setup
+
+The fastest way to configure everything:
+
+```
 npx mcp-relay-kit --setup
 ```
 
-It walks you through picking services, entering credentials, and configuring your AI tool (Claude Code, Gemini CLI, Cursor, Windsurf, or Codex).
-
-For manual configuration, see below.
+This walks you through picking services, entering credentials, and configuring your AI tool (Claude Code, Gemini CLI, Cursor, Windsurf, or Codex).
 
 ## Manual setup
 
 ### 1. Clone and build
 
-```bash
+```
 git clone https://github.com/SGudbrandsson/mcp-relay-kit.git
 cd mcp-relay-kit
 npm install && npm run build
@@ -86,7 +102,7 @@ Replace the paths with your actual install location and config path.
 
 ## Proxy any MCP server
 
-Already using an MCP server for GitHub, Slack, or anything else? Add it to the relay instead of loading it directly — you get the same functionality with a fraction of the context cost.
+Already using an MCP server for GitHub, Slack, or anything else? Add it to the relay instead of loading it directly — same functionality, fraction of the context cost.
 
 ```json
 {
@@ -157,6 +173,7 @@ Project management — tasks, comments, and project tracking.
 | `list_project_tasks` | List tasks in a project (incomplete by default) |
 
 **Config:**
+
 ```json
 {
   "token": "your-personal-access-token",
@@ -179,6 +196,7 @@ Error tracking — list, inspect, and manage issues and events.
 | `update_issue` | Update an issue (assign, change status, set priority) |
 
 **Config:**
+
 ```json
 {
   "token": "your-sentry-auth-token",
@@ -205,6 +223,7 @@ Issue tracking — create, update, search, and manage issues and projects via Gr
 | `list_labels` | List available issue labels |
 
 **Config:**
+
 ```json
 {
   "token": "your-linear-api-key"
@@ -227,6 +246,7 @@ Product analytics — query events, persons, session recordings, and insights.
 | `get_session_recording` | Get a specific session recording with events and details |
 
 **Config:**
+
 ```json
 {
   "token": "your-posthog-personal-api-key",
@@ -288,7 +308,7 @@ export const availableAdapters: Record<string, ServiceAdapter> = {
 
 The relay auto-registers any service that appears in both the adapter registry and the config file.
 
-## Multiple Instances of the Same Service
+## Multiple instances of the same service
 
 You can register the same service multiple times with different configurations using `service:label` syntax in your config keys:
 
@@ -314,20 +334,20 @@ You can register the same service multiple times with different configurations u
 }
 ```
 
-- Use `service:label` to create named instances (e.g. `"sentry:production"`, `"supabase:app-db"`)
+- Use `service:label` to create named instances (e.g., `"sentry:production"`, `"supabase:app-db"`)
 - Plain keys like `"supabase"` still work for single instances
 - Each instance gets its own config and appears separately in search results
 - Use the full instance name when calling execute: `execute("sentry:production", "list_issues", "{}")`
 - Search matches against both the service type and the label, so searching "production" finds all production instances
 
-## Per-Project Configuration
+## Per-project configuration
 
 Different projects can use different configs pointing to different services:
 
 ```
 ~/.config/mcp-relay-kit/
-├── keeps.json      → asana + slack + sentry
-├── codeman.json    → asana + github
+├── project-a.json  → asana + slack + sentry
+├── project-b.json  → asana + github
 └── personal.json   → asana
 ```
 
@@ -335,23 +355,13 @@ Each project's `.mcp.json` points to its own config via `GATEWAY_CONFIG`.
 
 ## Testing
 
-```bash
+```
 npm test           # run all tests
 npm run test:watch # watch mode
 ```
 
-Tests include:
-- Unit tests for the service registry (search, execute, validation)
-- Unit tests for config loading (env var interpolation, error handling)
-- Unit tests for the Asana, Sentry, Linear, and PostHog adapters (mocked HTTP)
-- E2E test that starts the real MCP server process and communicates via stdio
+Tests cover the service registry (search, execute, validation), config loading (env var interpolation, error handling), each built-in adapter (mocked HTTP), and an E2E test that starts the real MCP server process and communicates via stdio.
 
-## Why not just use multiple MCP servers directly?
+## License
 
-**Context cost.** Each MCP server injects its full tool list into your AI's context window. One server with 20 tools might cost 15,000 tokens. Five servers and you've lost 75,000+ tokens of context to tool definitions alone — before your code, your conversation, or your files.
-
-The relay collapses all of that into 2 tool definitions at ~2,000 tokens, no matter how many services sit behind it.
-
-**Discoverability.** With 5+ MCP servers loaded, your AI has 100+ tools to choose from. It often picks the wrong one or hallucinates parameters. With the relay, the AI searches first (`search("create issue")`), gets back the exact schema, then calls it. Fewer mistakes, less wasted context on retries.
-
-**One config, one process.** Instead of managing 5 separate MCP server configs, you manage one relay config. One process to start, one place to add credentials, one thing to debug if something breaks.
+MIT
